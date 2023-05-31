@@ -6,6 +6,7 @@ import data_preparation
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.metrics import mean_squared_error, r2_score
+
 # import spreparowanych danych
 df = data_preparation.data_prep(True, True)
 
@@ -15,6 +16,7 @@ print("\n Dane, gdzie przewidujemy pm2.5:")
 print(df[1])
 
 df_main = df[0]
+df_to_predict = df[1]
 
 # obserwacje a wartości przewidywane
 X = df_main.drop(columns=['pm2.5'])
@@ -64,3 +66,9 @@ r2_lasso = r2_score(y_test, y_pred_lasso)
 print("\n2. Regresja LASSO")
 print("MSE:", mse_lasso)
 print("R^2:", r2_lasso)
+
+# Przewidywanie brakujących danych na bazie modelu lasso
+lasso_predictions = model_lasso.predict(df_to_predict.drop(columns=['pm2.5']))
+df_to_predict['pm2.5'] = lasso_predictions
+
+print(df_to_predict)
