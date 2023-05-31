@@ -63,5 +63,10 @@ def data_prep(dropDay, dropEmpty):
         df.reset_index(drop=True)
         print("Usunięto wiersze z niepoprawnymi danymi.\n")
 
+    # oddzielamy komórki z pustym pm2.5 do innego dataframe
+    pm25_df = df[df['pm2.5'].isna()]
+    df = df.dropna(subset=['pm2.5'])
+
     # zwróć zbiór danych po przygotowaniu
-    return df
+    # pierwszy to dane do modelu, drugi dla estymowanych wierszy
+    return df, pm25_df
