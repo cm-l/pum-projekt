@@ -18,6 +18,17 @@ print(df[0])
 print("\n Dane, gdzie przewidujemy pm2.5:")
 print(df[1])
 
+#korelacja
+
+print(df[0].corr()["pm2.5"])
+#Pomiedzy pm2.5 i IWS jest najwieksza korelacja, wiec wykresy beda dla zaleznosci pm2.5 od IWS dla lepszego zobrazowania, do ustalenia czy jest sens dropnac kolumny
+
+#Rozklad pm2.5
+plt.hist(df[0]["pm2.5"])
+plt.show() 
+#Zaleznosc pm2.5 od Iws
+plt.scatter(df[0]["Iws"],df[0]["pm2.5"])
+plt.show() 
 
 df_main = df[0]
 df_to_predict = df[1]
@@ -28,6 +39,7 @@ y = df_main['pm2.5']
 
 # podział na zbiór testowy i treningowy
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=707)
+
 
 # # 1. REGRESJA LINIOWA
 # model = LinearRegression()
@@ -49,7 +61,8 @@ model_lasso = Lasso(alpha=0.02, random_state=4664464)  # alpha do dostosowania
 model_lasso.fit(X_train, y_train)
 
 y_pred_lasso = model_lasso.predict(X_test)
-
+#do wykresu potem
+lasso_predictions=y_pred_lasso
 # Ocena modelu
 mse_lasso = mean_squared_error(y_test, y_pred_lasso)
 r2_lasso = r2_score(y_test, y_pred_lasso)
@@ -60,12 +73,14 @@ print("R^2 dla testowych:", r2_lasso)
 y_pred_lasso = model_lasso.predict(X_train)
 print("R^2 dla treningowych: %.2f" % r2_score(y_train, y_pred_lasso))
 
+
 # 2. RANDOM FOREST
 model_forest = RandomForestRegressor(random_state=123456)
 model_forest.fit(X_train, y_train)
 
 y_pred_forest = model_forest.predict(X_test)
-
+#do wykresu potem
+forest_predictions=y_pred_forest
 # Ocena modelu
 mse_forest = mean_squared_error(y_test, y_pred_forest)
 r2_forest = r2_score(y_test, y_pred_forest)
@@ -77,51 +92,51 @@ y_pred_forest = model_forest.predict(X_train)
 print("R^2 dla treningowych: %.2f" % r2_score(y_train, y_pred_forest))
 
 
-# 3. REGRESJA KNN
+# # 3. REGRESJA KNN
 
 
-from sklearn.preprocessing import MinMaxScaler
-from sklearn import neighbors
+# from sklearn.preprocessing import MinMaxScaler
+# from sklearn import neighbors
 
-#Normalizacja danych
-scaler = MinMaxScaler(feature_range=(0, 1))
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.fit_transform(X_test)
+# #Normalizacja danych
+# scaler = MinMaxScaler(feature_range=(0, 1))
+# X_train_scaled = scaler.fit_transform(X_train)
+# X_test_scaled = scaler.fit_transform(X_test)
 
-#Szukanie najlepszego k
+# #Szukanie najlepszego k
 
-print("\n Szukanie najlepszego K")
+# print("\n Szukanie najlepszego K")
 
-rmse_val = [] #to store rmse values for different k
-for K in range(10):
-    K = K+1
-    knn = neighbors.KNeighborsRegressor(n_neighbors = K)
+# rmse_val = [] #to store rmse values for different k
+# for K in range(10):
+#     K = K+1
+#     knn = neighbors.KNeighborsRegressor(n_neighbors = K)
 
-    knn.fit(X_train_scaled, y_train)
-    y_pred_knn = knn.predict(X_test_scaled)
-    print('R^2 for k= ' , K , 'is:', r2_score(y_test, y_pred_knn))
+#     knn.fit(X_train_scaled, y_train)
+#     y_pred_knn = knn.predict(X_test_scaled)
+#     print('R^2 for k= ' , K , 'is:', r2_score(y_test, y_pred_knn))
 
-#Najlepszy k jest 1
+# #Najlepszy k jest 1
 
 
-knn = neighbors.KNeighborsRegressor(n_neighbors = 1)
-knn.fit(X_train_scaled, y_train)
-y_pred_knn = knn.predict(X_test_scaled)
+# knn = neighbors.KNeighborsRegressor(n_neighbors = 1)
+# knn.fit(X_train_scaled, y_train)
+# y_pred_knn = knn.predict(X_test_scaled)
 
-# Ocena modelu
+# # Ocena modelu
 
-print("\n3. Regresja KNN")
-print("MSE: %.2f" % mean_squared_error(y_test, y_pred_knn))
-# The coefficient of determination: 1 is perfect prediction
-print("R^2 dla testowych: %.2f" % r2_score(y_test, y_pred_knn))
-y_pred_knn = knn.predict(X_train_scaled)
+# print("\n3. Regresja KNN")
+# print("MSE: %.2f" % mean_squared_error(y_test, y_pred_knn))
+# # The coefficient of determination: 1 is perfect prediction
+# print("R^2 dla testowych: %.2f" % r2_score(y_test, y_pred_knn))
+# y_pred_knn = knn.predict(X_train_scaled)
 
-print("R^2 dla treningowych: %.2f" % r2_score(y_train, y_pred_knn))
+# print("R^2 dla treningowych: %.2f" % r2_score(y_train, y_pred_knn))
 
 
 # 3 Model Wielomianowy
 poly = PolynomialFeatures(degree=3, include_bias=False)
-
+# Degree 3 daje najlepsze wyniki dla testowych, wiecej i mamy overfitting
 X_train_poly = poly.fit_transform(X_train)
 X_test_poly = poly.fit_transform(X_test)
 
@@ -130,37 +145,79 @@ poly_reg_model = linear_model.LinearRegression()
 poly_reg_model.fit(X_train_poly,y_train)
 
 Y_pred_poly = poly_reg_model.predict(X_test_poly)
+#do wykresu potem
+poly_predictions = Y_pred_poly
 
 #Dane regresji wielomianowej
-
-# The coefficients
-print("Coefficients: \n", poly_reg_model.coef_)
+print("\n3. Regresja wielomianowa")
 # The mean squared error
-print("Mean squared error: %.2f" % mean_squared_error(y_test, Y_pred_poly))
+print("MSE: %.2f" % mean_squared_error(y_test, Y_pred_poly))
 # The coefficient of determination: 1 is perfect prediction
-print("Coefficient of determination: %.2f" % r2_score(y_test, Y_pred_poly))
+print("R^2 dla testowych: %.2f" % r2_score(y_test, Y_pred_poly))
 Y_pred_poly = poly_reg_model.predict(X_train_poly)
 
-print("Coefficient of determination for train: %.2f" % r2_score(y_train, Y_pred_poly))
+print("R^2 dla treningowych: %.2f" % r2_score(y_train, Y_pred_poly))
+
+#Dla dodatkowych wykresów zobaczymy czy modele tworza podobne do rzeczywistych pm2.5 dla danych testowych
+
+df_lasso = X_test
+df_random_forest = X_test
+df_poly = X_test
+#Dla lasso
+df_lasso['pm2.5'] = lasso_predictions
+
+#Rozklad pm2.5
+plt.hist(df_lasso["pm2.5"])
+plt.show() 
+#Zaleznosc pm2.5 od Iws
+plt.scatter(df_lasso["Iws"],df_lasso["pm2.5"])
+plt.show() 
+
+#Ocena modelu: prosty w implementacji, ale daje beznadziejne rezultaty, słaby R^2 i rozklad danych kompletnie nie odpowiada rzeczywistosci w dodatku generuje ujemne pm2.5, ewidentnie brak relacji liniowej
 
 
-# Przewidywanie brakujących danych na bazie modelu lasso
-lasso_predictions = model_lasso.predict(df_to_predict.drop(columns=['pm2.5']))
-df_to_predict['pm2.5'] = lasso_predictions
+#Dla random_forest
+df_random_forest['pm2.5'] = forest_predictions
 
-print(df_to_predict)
+#Rozklad pm2.5
+plt.hist(df_random_forest["pm2.5"])
+plt.show() 
+#Zaleznosc pm2.5 od Iws
+plt.scatter(df_random_forest["Iws"],df_random_forest["pm2.5"])
+plt.show() 
 
-# Przewidywanie brakujących danych na bazie modelu random forest
-forest_predictions = model_forest.predict(df_to_predict.drop(columns=['pm2.5']))
-df_to_predict['pm2.5'] = forest_predictions
+#ocena model: długi w nauce, ale daje najlepsze rezultaty, dobry R^2 i zwraca realne nieujemne pm2.5
 
-print(df_to_predict)
 
-# Przewidywanie brakujących danych na bazie modelu knn (ten daje dziwne wyniki, warto to skonsultować na zajęciach)
-knn_predictions = knn.predict(df_to_predict.drop(columns=['pm2.5']))
-df_to_predict['pm2.5'] = knn_predictions
+#Dla wielomianowej
+df_poly['pm2.5'] = poly_predictions
 
-print(df_to_predict)
+#Rozklad pm2.5
+plt.hist(df_poly["pm2.5"])
+plt.show() 
+#Zaleznosc pm2.5 od Iws
+plt.scatter(df_poly["Iws"],df_poly["pm2.5"])
+plt.show() 
+
+#ocena modelu: ok R^2, rozkład w miare podobny, chociaz wystepuja ujemne pm2.5, trudno merytorycznie uzasadnić zaleznosci na podstawie trzeciej potegi
+
+# # Przewidywanie brakujących danych na bazie modelu lasso
+# lasso_predictions = model_lasso.predict(df_to_predict.drop(columns=['pm2.5']))
+# df_to_predict['pm2.5'] = lasso_predictions
+
+# print(df_to_predict)
+
+# # Przewidywanie brakujących danych na bazie modelu random forest
+# forest_predictions = model_forest.predict(df_to_predict.drop(columns=['pm2.5']))
+# df_to_predict['pm2.5'] = forest_predictions
+
+# print(df_to_predict)
+
+# # Przewidywanie brakujących danych na bazie modelu knn (ten daje dziwne wyniki, warto to skonsultować na zajęciach)
+# knn_predictions = knn.predict(df_to_predict.drop(columns=['pm2.5']))
+# df_to_predict['pm2.5'] = knn_predictions
+
+# print(df_to_predict)
 
 
 
