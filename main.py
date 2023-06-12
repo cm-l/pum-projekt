@@ -7,6 +7,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn import datasets, linear_model
 
 # import spreparowanych danych
 df = data_preparation.data_prep(False, True)
@@ -75,7 +77,7 @@ y_pred_forest = model_forest.predict(X_train)
 print("R^2 dla treningowych: %.2f" % r2_score(y_train, y_pred_forest))
 
 
-# 2. REGRESJA KNN
+# 3. REGRESJA KNN
 
 
 from sklearn.preprocessing import MinMaxScaler
@@ -116,6 +118,32 @@ y_pred_knn = knn.predict(X_train_scaled)
 
 print("R^2 dla treningowych: %.2f" % r2_score(y_train, y_pred_knn))
 
+
+# 3 Model Wielomianowy
+poly = PolynomialFeatures(degree=3, include_bias=False)
+
+X_train_poly = poly.fit_transform(X_train)
+X_test_poly = poly.fit_transform(X_test)
+
+
+poly_reg_model = linear_model.LinearRegression()
+poly_reg_model.fit(X_train_poly,y_train)
+
+Y_pred_poly = poly_reg_model.predict(X_test_poly)
+
+#Dane regresji wielomianowej
+
+# The coefficients
+print("Coefficients: \n", poly_reg_model.coef_)
+# The mean squared error
+print("Mean squared error: %.2f" % mean_squared_error(y_test, Y_pred_poly))
+# The coefficient of determination: 1 is perfect prediction
+print("Coefficient of determination: %.2f" % r2_score(y_test, Y_pred_poly))
+Y_pred_poly = poly_reg_model.predict(X_train_poly)
+
+print("Coefficient of determination for train: %.2f" % r2_score(y_train, Y_pred_poly))
+
+
 # Przewidywanie brakujących danych na bazie modelu lasso
 lasso_predictions = model_lasso.predict(df_to_predict.drop(columns=['pm2.5']))
 df_to_predict['pm2.5'] = lasso_predictions
@@ -128,9 +156,12 @@ df_to_predict['pm2.5'] = forest_predictions
 
 print(df_to_predict)
 
-# # Przewidywanie brakujących danych na bazie modelu knn (ten daje dziwne wyniki, warto to skonsultować na zajęciach)
-# knn_predictions = knn.predict(df_to_predict.drop(columns=['pm2.5']))
-# df_to_predict['pm2.5'] = knn_predictions
+# Przewidywanie brakujących danych na bazie modelu knn (ten daje dziwne wyniki, warto to skonsultować na zajęciach)
+knn_predictions = knn.predict(df_to_predict.drop(columns=['pm2.5']))
+df_to_predict['pm2.5'] = knn_predictions
 
-# print(df_to_predict)
+print(df_to_predict)
+
+
+
 
