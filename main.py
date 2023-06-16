@@ -1,4 +1,5 @@
 # Przygotowanie danych
+import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 
 import data_preparation
@@ -10,6 +11,9 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import datasets, linear_model
 
+# ładne grafiki
+import seaborn as sns
+
 # import spreparowanych danych
 df = data_preparation.data_prep(False, True)
 
@@ -19,16 +23,63 @@ print("\n Dane, gdzie przewidujemy pm2.5:")
 print(df[1])
 
 #korelacja
-
+print("Korelacje:")
 print(df[0].corr()["pm2.5"])
+# Wykres
+correlations = df[0].corr()["pm2.5"]
+corr_matrix = correlations.to_frame()
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", square=False)
+plt.title("Macierz korelacji")
+plt.show()
+
 #Pomiedzy pm2.5 i IWS jest najwieksza korelacja, wiec wykresy beda dla zaleznosci pm2.5 od IWS dla lepszego zobrazowania, do ustalenia czy jest sens dropnac kolumny
 
 #Rozklad pm2.5
-plt.hist(df[0]["pm2.5"])
-plt.show() 
+#plt.hist(df[0]["pm2.5"])
+#plt.show()
+
+# potem to zakomentuję bo mnie coś strzeli jak się powoli włączają w pycharmie te wykresy
+# połowa czasu uruchamiania kodu to czekanie na wykres - super community edition
+
+# WYKRES JEDEN
+# PM2.5 w zależności od czasu
+# to już powinno być w dataprepie ale na wszelki wypadek
+df_filtered = df[0].dropna(subset=['pm2.5'])
+
+pm25_values = df_filtered['pm2.5']
+dates = pd.to_datetime(df_filtered[['year', 'month', 'day', 'hour']])
+
+plt.figure(figsize=(12, 6))
+plt.plot(dates, pm25_values, color='red')
+
+plt.title('Stężenie PM2.5 w powietrzu w obserwowanym okresie')
+plt.xlabel('Data')
+plt.ylabel('PM2.5')
+
+plt.xticks(rotation=45)
+plt.show()
+
+
 #Zaleznosc pm2.5 od Iws
-plt.scatter(df[0]["Iws"],df[0]["pm2.5"])
-plt.show() 
+#plt.scatter(df[0]["Iws"],df[0]["pm2.5"])
+#plt.show()
+
+# to już powinno być w dataprepie ale na wszelki wypadek
+df_filtered = df[0].dropna(subset=['Iws', 'pm2.5'])
+
+iws_values = df_filtered['Iws']
+pm25_values = df_filtered['pm2.5']
+
+plt.figure(figsize=(8, 6))
+plt.scatter(iws_values, pm25_values, color='grey', alpha=0.37)
+
+plt.title('Zależność między prędkością wiatru a PM2.5')
+plt.xlabel('Prędkość wiatru')
+plt.ylabel('PM2.5')
+
+plt.show()
+
 
 df_main = df[0]
 df_to_predict = df[1]
@@ -171,7 +222,36 @@ plt.hist(df_lasso["pm2.5"])
 plt.show() 
 #Zaleznosc pm2.5 od Iws
 plt.scatter(df_lasso["Iws"],df_lasso["pm2.5"])
-plt.show() 
+plt.show()
+
+# Real
+plt.subplot(1, 2, 1)
+plt.scatter(df[0]['Iws'], df[0]['pm2.5'], color='blue', alpha=0.5)
+plt.xlabel('Prędkość wiatru')
+plt.ylabel('PM2.5')
+plt.title('Prawdziwe dane')
+
+# LASSO - porównanie
+plt.subplot(1, 2, 2)
+plt.scatter(df_lasso['Iws'], df_lasso['pm2.5'], color='red', alpha=0.5)
+plt.xlabel('Prędkość wiatru')
+plt.ylabel('PM2.5')
+plt.title('Model LASSO')
+
+plt.tight_layout()
+plt.show()
+
+# OVERLAY DLA LASSO
+plt.scatter(df[0]['Iws'], df[0]['pm2.5'], color='blue', alpha=0.5, label='Prawdziwe dane')
+plt.scatter(df_lasso['Iws'], df_lasso['pm2.5'], color='red', alpha=0.5, label='Model LASSO')
+
+plt.xlabel('Prędkość wiatru')
+plt.ylabel('PM2.5')
+plt.title('Prawdziwe dane vs. Model LASSO')
+
+plt.legend()
+
+plt.show()
 
 #Ocena modelu: prosty w implementacji, ale daje beznadziejne rezultaty, słaby R^2 i rozklad danych kompletnie nie odpowiada rzeczywistosci w dodatku generuje ujemne pm2.5, ewidentnie brak relacji liniowej
 
@@ -184,7 +264,19 @@ plt.hist(df_random_forest["pm2.5"])
 plt.show() 
 #Zaleznosc pm2.5 od Iws
 plt.scatter(df_random_forest["Iws"],df_random_forest["pm2.5"])
-plt.show() 
+plt.show()
+
+# OVERLAY DLA RANDOM FORESTA
+plt.scatter(df[0]['Iws'], df[0]['pm2.5'], color='blue', alpha=0.5, label='Prawdziwe dane')
+plt.scatter(df_random_forest['Iws'], df_random_forest['pm2.5'], color='red', alpha=0.5, label='Model Random Forest')
+
+plt.xlabel('Prędkość wiatru')
+plt.ylabel('PM2.5')
+plt.title('Prawdziwe dane vs. Model Random Forest')
+
+plt.legend()
+
+plt.show()
 
 #ocena model: długi w nauce, ale daje najlepsze rezultaty, dobry R^2 i zwraca realne nieujemne pm2.5
 
@@ -198,6 +290,18 @@ plt.show()
 #Zaleznosc pm2.5 od Iws
 plt.scatter(df_poly["Iws"],df_poly["pm2.5"])
 plt.show() 
+
+# OVERLAY DLA WIELOMIANOWEJ
+plt.scatter(df[0]['Iws'], df[0]['pm2.5'], color='blue', alpha=0.5, label='Prawdziwe dane')
+plt.scatter(df_poly['Iws'], df_poly['pm2.5'], color='red', alpha=0.5, label='Regresja wielomianowa')
+
+plt.xlabel('Prędkość wiatru')
+plt.ylabel('PM2.5')
+plt.title('Prawdziwe dane vs. Model regresji wielomianowej')
+
+plt.legend()
+
+plt.show()
 
 #ocena modelu: ok R^2, rozkład w miare podobny, chociaz wystepuja ujemne pm2.5, trudno merytorycznie uzasadnić zaleznosci na podstawie trzeciej potegi
 
